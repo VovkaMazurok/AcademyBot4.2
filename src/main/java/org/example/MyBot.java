@@ -43,17 +43,25 @@ public class MyBot extends TelegramLongPollingBot {
                 sendPhoto(chatId, "Dogecoin.png");
             } else {
                 try {
-                    double amount = Double.parseDouble(text);
-                    calculateCryptoAmount(amount, chatId);
+                    String[] parts = text.split(" ");
+                    if (parts.length == 2) {
+                        String crypto = parts[0];
+                        double amount = Double.parseDouble(parts[1]);
+                        calculateCryptoAmountForSpecificCrypto(crypto, amount, chatId);
+                    } else if (parts.length == 1) {
+                        double amount = Double.parseDouble(parts[0]);
+                        calculateCryptoAmount(amount, chatId); // Виклик методу calculateCryptoAmount
+                    } else {
+                        sendMessage(chatId, "Unknown command!");
+                    }
                 } catch (NumberFormatException e) {
-                    sendMessage(chatId,"Unknown command!");
+                    sendMessage(chatId, "Unknown command!");
                 }
             }
         } catch (Exception e) {
             System.out.println("Error!");
         }
     }
-
     void sendMessage(long chatId, String text) throws Exception {
         var message = new SendMessage();
         message.setChatId(chatId);
@@ -97,6 +105,31 @@ public class MyBot extends TelegramLongPollingBot {
 
         sendPhoto(chatId, "Dogecoin.png");
         sendMessage(chatId, "DOGE: " + df.format(dogeAmount));
+    }
+
+    private void calculateCryptoAmountForSpecificCrypto(String crypto, double amount, long chatId) throws Exception {
+        double cryptoAmount = amount / getCryptoPrice(crypto);
+        DecimalFormat df = new DecimalFormat("#.####");
+
+        sendMessage(chatId, String.format("For $%.2f you can buy:", amount));
+
+        switch (crypto.toLowerCase()) {
+            case "btc":
+                sendPhoto(chatId, "Bitcoin.png");
+                sendMessage(chatId, "BTC: " + df.format(cryptoAmount));
+                break;
+            case "eth":
+                sendPhoto(chatId, "Ethereum.png");
+                sendMessage(chatId, "ETH: " + df.format(cryptoAmount));
+                break;
+            case "doge":
+                sendPhoto(chatId, "Dogecoin.png");
+                sendMessage(chatId, "DOGE: " + df.format(cryptoAmount));
+                break;
+            default:
+                sendMessage(chatId, "Unknown cryptocurrency!");
+                break;
+        }
     }
 
     @Override
